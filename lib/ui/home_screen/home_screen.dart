@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pixabay_image_setu/common/common.dart';
+
+import 'home_screen_bloc.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  late HomeScreenBloc _homeScreenBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _homeScreenBloc = context.read<HomeScreenBloc>();
+    _scrollController.addListener(_onScroll);
+
+    // Load the first page
+    _homeScreenBloc.add(LoadImage(page: 1));
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      _homeScreenBloc.add(LoadNextPage());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    final double itemWidth =
+        size.width / 2; // Set item width to fit 2 images in one row
+
+    return BaseScreen(
+      enableAppBar: true,
+      isSafeAreaOnTop: true,
+      homeAppBar: false,
+      isAppShadowEffect: false,
+      title: 'Home',
+      body: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: BlocBuilder<HomeScreenBloc, HomeScreenState>(
+          builder: (context, state) {
+            // Show loader while loading the first page
+            if (state is LoadingImages) {
+              return const Align(
+                  alignment: Alignment.center,
+                  child: CircularProgressIndicator());
+            }
+            // When images are loaded, show them in GridView
+            else if (state is LoadedImages) {
+              return GridView.builder(
+                controller: _scrollController,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 columns
+                    childAspectRatio: 0.9 // Adjust aspect ratio for layout
+                    ),
+                itemCount: state.images.length + (state.hasReachedMax ? 0 : 1),
+                itemBuilder: (context, index) {
+                  if (index == state.images.length) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final image = state.images[index];
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0), // Add some spacing
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          // Rounded corners
+                          child: Image.network(
+                            image.previewURL ?? '',
+                            fit: BoxFit.cover,
+                            width: itemWidth,
+                            height: itemWidth,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          left: 0,
+                          child: Container(
+                            width: itemWidth,
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(12),
+                                bottomRight: Radius.circular(12),
+                              ),
+                            ),
+                            // Semi-transparent background
+                            padding: const EdgeInsets.all(4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  image.tags ?? 'No Tags',
+                                  overflow: TextOverflow.ellipsis,
+                                  // Display the image name (tags)
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                // Space between text and icons
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.favorite,
+                                      color: Colors.red,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      formatCount(image.likes!),
+                                      // Formatted likes
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.visibility,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      formatCount(image.views!),
+                                      // Formatted views
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+            // Handle error state
+            else if (state is ErrorImages) {
+              return Center(child: Text(state.message));
+            }
+            return Container();
+          },
+        ),
+      ),
+    );
+  }
+
+  // Method to format numbers into a readable string
+  String formatCount(int count) {
+    if (count >= 1000000000) {
+      // Billions
+      return '${(count / 1000000000).toStringAsFixed(1)}B';
+    } else if (count >= 1000000) {
+      // Millions
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      // Thousands
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString(); // For counts below 1000
+  }
+}
