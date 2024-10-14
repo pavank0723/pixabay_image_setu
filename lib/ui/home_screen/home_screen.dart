@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pixabay_image_setu/common/common.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:pixabay_image_setu/res/res.dart';
 
 import 'home_screen_bloc.dart';
 
@@ -41,8 +44,33 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    final double itemWidth =
-        size.width / 2; // Set item width to fit 2 images in one row
+
+    // Define screen size breakpoints
+    final isExtraSmallScreen = size.width < 300;
+    final isSmallScreen = size.width < 600;
+    final isMediumScreen = size.width >= 600 && size.width < 1024;
+    final isLargeScreen = size.width >= 1024;
+
+    // Calculate crossAxisCount based on screen size (media query logic)
+    int crossAxisCount;
+    double childAspectRatio;
+
+    if (isExtraSmallScreen) {
+      crossAxisCount = 1; // 2 columns for small screens
+      childAspectRatio = 1.2; // Adjust height
+    } else if (isSmallScreen) {
+      crossAxisCount = 2; // 2 columns for small screens
+      childAspectRatio = 1; // Adjust height
+    } else if (isMediumScreen) {
+      crossAxisCount = 4; // 3 columns for medium screens
+      childAspectRatio = 0.8; // Adjust height
+    } else if (isLargeScreen) {
+      crossAxisCount = 6; // 4 columns for large screens
+      childAspectRatio = 0.9; // Adjust height
+    } else {
+      crossAxisCount = 2; // Default for unknown cases
+      childAspectRatio = 1.0;
+    }
 
     return BaseScreen(
       enableAppBar: true,
@@ -65,10 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
             else if (state is LoadedImages) {
               return GridView.builder(
                 controller: _scrollController,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 2 columns
-                    childAspectRatio: 0.9 // Adjust aspect ratio for layout
-                    ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount, // Responsive grid columns
+                  childAspectRatio: childAspectRatio, // Responsive aspect ratio
+                ),
                 itemCount: state.images.length + (state.hasReachedMax ? 0 : 1),
                 itemBuilder: (context, index) {
                   if (index == state.images.length) {
@@ -80,13 +108,49 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
                           // Rounded corners
-                          child: Image.network(
-                            image.previewURL ?? '',
+                          child: CachedNetworkImage(
+                            imageUrl: image.previewURL ?? '',
                             fit: BoxFit.cover,
-                            width: itemWidth,
-                            height: itemWidth,
+                            width: double.infinity,
+                            // Make it take full width
+                            height: size.height * 0.3,
+                            fadeInDuration: const Duration(milliseconds: 200),
+                            // fadeInCurve: Curves.bounceIn,
+                            // fadeOutCurve: Curves.bounceOut,
+
+                            imageBuilder: (context, imageProvider) => Container(
+                              width: double.infinity,
+                              // Make it take full width
+                              height: size.height * 0.3,
+                              decoration: BoxDecoration(
+                                // shape: BoxShape.circle,
+
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            placeholder: (context, url) => Image.asset(
+                              AppImages.imgNoImage,
+                              width: size.width,
+                              height: 200.h,
+                              fit: BoxFit.fill,
+                            ),
+                            errorWidget: (context, url, error) {
+                              return Image.asset(
+                                AppImages.imgNoImage,
+                                width: double.infinity,
+                                // Make it take full width
+                                height: size.height * 0.3,
+                                fit: BoxFit.fill,
+                              );
+                            },
                           ),
                         ),
                         Positioned(
@@ -94,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           right: 0,
                           left: 0,
                           child: Container(
-                            width: itemWidth,
                             decoration: const BoxDecoration(
                               color: Colors.black54,
                               borderRadius: BorderRadius.only(
