@@ -113,44 +113,53 @@ class _HomeScreenState extends State<HomeScreen> {
                             topRight: Radius.circular(12),
                           ),
                           // Rounded corners
-                          child: CachedNetworkImage(
-                            imageUrl: image.previewURL ?? '',
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            // Make it take full width
-                            height: size.height * 0.3,
-                            fadeInDuration: const Duration(milliseconds: 200),
-                            // fadeInCurve: Curves.bounceIn,
-                            // fadeOutCurve: Curves.bounceOut,
-
-                            imageBuilder: (context, imageProvider) => Container(
+                          child: GestureDetector(
+                            onTap: () {
+                              _showBigImage(
+                                context: context,
+                                itemImage: image.previewURL ?? "",
+                                imgWidth: double.parse(
+                                    image.webformatWidth.toString()),
+                                imgHeight: double.parse(
+                                    image.webformatHeight.toString()),
+                              );
+                            },
+                            child: CachedNetworkImage(
+                              imageUrl: image.webformatURL ?? '',
+                              fit: BoxFit.cover,
                               width: double.infinity,
-                              // Make it take full width
                               height: size.height * 0.3,
-                              decoration: BoxDecoration(
-                                // shape: BoxShape.circle,
-
-                                image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            placeholder: (context, url) => Image.asset(
-                              AppImages.imgNoImage,
-                              width: size.width,
-                              height: 200.h,
-                              fit: BoxFit.fill,
-                            ),
-                            errorWidget: (context, url, error) {
-                              return Image.asset(
-                                AppImages.imgNoImage,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              imageBuilder: (context, imageProvider) =>
+                                  Container(
                                 width: double.infinity,
                                 // Make it take full width
                                 height: size.height * 0.3,
+                                decoration: BoxDecoration(
+                                  // shape: BoxShape.circle,
+
+                                  image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              placeholder: (context, url) => Image.asset(
+                                AppImages.imgNoImage,
+                                width: size.width,
+                                height: 200.h,
                                 fit: BoxFit.fill,
-                              );
-                            },
+                              ),
+                              errorWidget: (context, url, error) {
+                                return Image.asset(
+                                  AppImages.imgNoImage,
+                                  width: double.infinity,
+                                  // Make it take full width
+                                  height: size.height * 0.3,
+                                  fit: BoxFit.fill,
+                                );
+                              },
+                            ),
                           ),
                         ),
                         Positioned(
@@ -249,5 +258,57 @@ class _HomeScreenState extends State<HomeScreen> {
       return '${(count / 1000).toStringAsFixed(1)}K';
     }
     return count.toString(); // For counts below 1000
+  }
+
+  void _showBigImage({
+    required BuildContext context,
+    required String itemImage,
+    required double imgWidth,
+    required double imgHeight,
+  }) {
+    Size size = MediaQuery.of(context).size;
+    showDialog(
+      context: context,
+      useSafeArea: true,
+      barrierDismissible: false,
+      builder: (context) {
+        return SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: SizedBox(
+                  width: size.width,
+                  height: size.height,
+                  child: Image.network(
+                    itemImage,
+                    fit: BoxFit.fitHeight,
+                    width: imgWidth,
+                    height: imgHeight,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 10, // Added padding from the right
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: AppColors.greyDark.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
