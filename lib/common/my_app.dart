@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pixabay_image_setu/repository/repository.dart';
 import 'package:pixabay_image_setu/res/res.dart';
-import 'package:pixabay_image_setu/widgets/views/common/common.dart';
 import 'package:pixabay_image_setu/route/route.dart' as route;
 
 class MyApp extends StatefulWidget {
@@ -41,10 +39,10 @@ class _MyAppState extends State<MyApp> {
             initialRoute: route.AppRoute.splashScreen,
             onGenerateRoute: route.AppRoute.controller,
             debugShowCheckedModeBanner: false,
-            navigatorObservers: [FlutterSmartDialog.observer],
+            /*navigatorObservers: [FlutterSmartDialog.observer],
             builder: FlutterSmartDialog.init(
               loadingBuilder: (String msg) => const CustomLoading(type: 1),
-            ),
+            ),*/
             theme: ThemeData(
               useMaterial3: true,
               textTheme: GoogleFonts.poppinsTextTheme(

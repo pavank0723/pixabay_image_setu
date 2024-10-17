@@ -31,7 +31,6 @@ dependencies:
   #  utils
   connectivity: ^3.0.6
   google_fonts: ^6.1.0
-  flutter_smart_dialog:
   shimmer: ^3.0.0
   intl: ^0.18.1
   fluttertoast: ^8.2.4
@@ -39,6 +38,7 @@ dependencies:
   flutter_svg: ^2.0.9
   flutter_dotenv: ^5.1.0
   cached_network_image: ^3.4.0
+  photo_view: ^0.15.0
 
 dev_dependencies:
   flutter_test:
@@ -54,5 +54,5 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
-    - .env
+#    - .env
 
